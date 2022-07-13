@@ -1,6 +1,4 @@
-from re import S
 import cv2
-from cv2 import flip
 import mediapipe as mp
 import numpy as np
 import csv
