@@ -9,35 +9,6 @@ from datetime import datetime
 
 image_size = 1
 
-def get_hand_gesture(res):
-    global dx1, dy1, dx2, dy2
-    joint = np.zeros((21, 3))
-    for j, lm in enumerate(res.landmark):
-        joint[j] = [lm.x, lm.y, lm.z]
-        if j == 0:
-            dx1 = int(lm.x*img.shape[0])
-            dy1 = int(lm.y*img.shape[1])
-        elif j == 12:
-            dx2 = int(lm.x*img.shape[0])
-            dy2 = int(lm.y*img.shape[1])
-
-    v1 = joint[[0,1,2,3,0,5,6,7,0,9, 10,11,0, 13,14,15,0, 17,18,19],:]
-    v2 = joint[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],:]
-
-    v = v2 - v1 
-    v = v / np.linalg.norm(v, axis=1)[:, np.newaxis]
-
-    angle = np.arccos(np.einsum('nt,nt->n',
-        v[[0,1,2,4,5,6,8,9, 10,12,13,14,16,17,18],:], 
-        v[[1,2,3,5,6,7,9,10,11,13,14,15,17,18,19],:])) 
-
-    angle = np.degrees(angle) 
-
-    data = np.array([angle], dtype=np.float32)
-    ret, results, neighbours, dist = knn.findNearest(data, k=3)
-    idx = int(results[0][0])
-    return idx, results
-
 def organize_data(most_left, most_up, most_right, most_down):
     most_left = int(most_left*640) - 10
     most_up = int(most_up*480) - 10
@@ -96,6 +67,35 @@ def process_image(img):
     img  =  cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     
     return img , result
+
+def get_hand_gesture(res):
+    global dx1, dy1, dx2, dy2
+    joint = np.zeros((21, 3))
+    for j, lm in enumerate(res.landmark):
+        joint[j] = [lm.x, lm.y, lm.z]
+        if j == 0:
+            dx1 = int(lm.x*img.shape[0])
+            dy1 = int(lm.y*img.shape[1])
+        elif j == 12:
+            dx2 = int(lm.x*img.shape[0])
+            dy2 = int(lm.y*img.shape[1])
+
+    v1 = joint[[0,1,2,3,0,5,6,7,0,9, 10,11,0, 13,14,15,0, 17,18,19],:]
+    v2 = joint[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],:]
+
+    v = v2 - v1 
+    v = v / np.linalg.norm(v, axis=1)[:, np.newaxis]
+
+    angle = np.arccos(np.einsum('nt,nt->n',
+        v[[0,1,2,4,5,6,8,9, 10,12,13,14,16,17,18],:], 
+        v[[1,2,3,5,6,7,9,10,11,13,14,15,17,18,19],:])) 
+
+    angle = np.degrees(angle) 
+
+    data = np.array([angle], dtype=np.float32)
+    ret, results, neighbours, dist = knn.findNearest(data, k=3)
+    idx = int(results[0][0])
+    return idx, results
 
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
